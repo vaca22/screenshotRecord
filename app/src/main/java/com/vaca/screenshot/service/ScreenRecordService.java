@@ -176,6 +176,7 @@ public class ScreenRecordService extends Service {
         mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
         mediaRecorder.setOutputFile(PathUtil.getPathX("fuck.mp4"));
         Log.e("fuck",PathUtil.getPathX("fuck.mp4"));
+        //不能是奇数
         mediaRecorder.setVideoSize(200, 200);  //after setVideoSource(), setOutFormat()
         mediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264);  //after setOutputFormat()
 //        if(isAudio) mediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);  //after setOutputFormat()
