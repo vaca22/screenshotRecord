@@ -173,15 +173,15 @@ public class ScreenRecordService extends Service {
         MediaRecorder mediaRecorder = new MediaRecorder();
 //        if(isAudio) mediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
         mediaRecorder.setVideoSource(MediaRecorder.VideoSource.SURFACE);
-        mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
+        mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
         mediaRecorder.setOutputFile(PathUtil.getPathX("fuck.mp4"));
         Log.e("fuck",PathUtil.getPathX("fuck.mp4"));
-        mediaRecorder.setVideoSize(mScreenWidth, mScreenHeight);  //after setVideoSource(), setOutFormat()
+        mediaRecorder.setVideoSize(200, 200);  //after setVideoSource(), setOutFormat()
         mediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264);  //after setOutputFormat()
 //        if(isAudio) mediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);  //after setOutputFormat()
         int bitRate;
         if (isVideoSd) {
-            mediaRecorder.setVideoEncodingBitRate(mScreenWidth * mScreenHeight/5);
+            mediaRecorder.setVideoEncodingBitRate(mScreenWidth * mScreenHeight/1000);
             mediaRecorder.setVideoFrameRate(10);
             bitRate = mScreenWidth * mScreenHeight / 1000;
         } else {
