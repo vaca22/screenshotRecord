@@ -121,13 +121,7 @@ public class ScreenRecordService extends Service {
                 // hide the button
                 mFloatView.setVisibility(View.INVISIBLE);
 
-                Handler handler1 = new Handler();
-                handler1.postDelayed(new Runnable() {
-                    public void run() {
-                        //start virtual
-                      //  startVirtual();
-                    }
-                }, 500);
+
 
                 Handler handler2 = new Handler();
                 handler2.postDelayed(new Runnable() {
@@ -135,7 +129,7 @@ public class ScreenRecordService extends Service {
                         //capture the screen
                         startCapture();
                     }
-                }, 1500);
+                }, 500);
 
                 Handler handler3 = new Handler();
                 handler3.postDelayed(new Runnable() {
