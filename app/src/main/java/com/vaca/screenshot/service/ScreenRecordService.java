@@ -39,7 +39,7 @@ public class ScreenRecordService extends Service {
     /**
      * 是否为标清视频
      */
-    private boolean isVideoSd = true;
+    private boolean isVideoSd = false;
 
     private int mScreenWidth;
     private int mScreenHeight;
@@ -106,22 +106,8 @@ public class ScreenRecordService extends Service {
 
         mMediaProjection = createMediaProjection();
         mMediaRecorder = createMediaRecorder();
-        Thread ga=new Thread(){
-            @Override
-            public void run() {
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-
         mVirtualDisplay = createVirtualDisplay(); // 必须在mediaRecorder.prepare() 之后调用，否则报错"fail to get surface"
-
         mMediaRecorder.start();
-            }
-        };
-        ga.start();
-
         return Service.START_NOT_STICKY;
     }
 
@@ -175,19 +161,22 @@ public class ScreenRecordService extends Service {
         mediaRecorder.setVideoSource(MediaRecorder.VideoSource.SURFACE);
         mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
         mediaRecorder.setOutputFile(PathUtil.getPathX("fuck.mp4"));
-        Log.e("fuck",PathUtil.getPathX("fuck.mp4"));
+        Log.e("fuck",""+mScreenWidth+"   "+mScreenHeight);
+        if(mScreenHeight%2!=0){
+            mScreenHeight--;
+        }
         //不能是奇数
-        mediaRecorder.setVideoSize(200, 200);  //after setVideoSource(), setOutFormat()
+        mediaRecorder.setVideoSize(mScreenWidth,mScreenHeight);  //after setVideoSource(), setOutFormat()
         mediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264);  //after setOutputFormat()
 //        if(isAudio) mediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);  //after setOutputFormat()
         int bitRate;
         if (isVideoSd) {
-            mediaRecorder.setVideoEncodingBitRate(mScreenWidth * mScreenHeight/1000);
-            mediaRecorder.setVideoFrameRate(10);
+            mediaRecorder.setVideoEncodingBitRate(mScreenWidth * mScreenHeight);
+            mediaRecorder.setVideoFrameRate(30);
             bitRate = mScreenWidth * mScreenHeight / 1000;
         } else {
             mediaRecorder.setVideoEncodingBitRate(5 * mScreenWidth * mScreenHeight);
-            mediaRecorder.setVideoFrameRate(10); //after setVideoSource(), setOutFormat()
+            mediaRecorder.setVideoFrameRate(30); //after setVideoSource(), setOutFormat()
             bitRate = 5 * mScreenWidth * mScreenHeight / 1000;
         }
         try {
