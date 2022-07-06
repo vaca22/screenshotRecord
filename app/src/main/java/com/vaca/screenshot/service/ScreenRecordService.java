@@ -10,6 +10,7 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.ImageFormat;
+import android.graphics.PixelFormat;
 import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
 import android.media.Image;
@@ -20,11 +21,20 @@ import android.media.projection.MediaProjectionManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
+import android.os.Handler;
 import android.os.IBinder;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.Gravity;
+import android.view.LayoutInflater;
+import android.view.MotionEvent;
+import android.view.View;
+import android.view.WindowManager;
+import android.widget.ImageButton;
+import android.widget.LinearLayout;
 
 import com.vaca.screenshot.MainActivity;
+import com.vaca.screenshot.MainApplication;
 import com.vaca.screenshot.PathUtil;
 import com.vaca.screenshot.R;
 import com.vaca.screenshot.utils.ScreenUtils;
@@ -67,11 +77,83 @@ public class ScreenRecordService extends Service {
         // TODO: Return the communication channel to the service.
         return null;
     }
+    private LinearLayout mFloatLayout = null;
+    private WindowManager.LayoutParams wmParams = null;
+    private WindowManager mWindowManager = null;
+    private LayoutInflater inflater = null;
+    private ImageButton mFloatView = null;
+    private void createFloatView()
+    {
+        wmParams = new WindowManager.LayoutParams();
+        mWindowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
+        wmParams.type = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
+        wmParams.format = PixelFormat.RGBA_8888;
+        wmParams.flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
+        wmParams.gravity = Gravity.LEFT | Gravity.TOP;
+        wmParams.x = 0;
+        wmParams.y = 0;
+        wmParams.width = WindowManager.LayoutParams.WRAP_CONTENT;
+        wmParams.height = WindowManager.LayoutParams.WRAP_CONTENT;
+        inflater = (LayoutInflater)getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        mFloatLayout = (LinearLayout) inflater.inflate(R.layout.float_layout, null);
+        mWindowManager.addView(mFloatLayout, wmParams);
+        mFloatView = (ImageButton)mFloatLayout.findViewById(R.id.float_id);
+
+        mFloatLayout.measure(View.MeasureSpec.makeMeasureSpec(0,
+                View.MeasureSpec.UNSPECIFIED), View.MeasureSpec
+                .makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+
+        mFloatView.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                // TODO Auto-generated method stub
+                wmParams.x = (int) event.getRawX() - mFloatView.getMeasuredWidth() / 2;
+                wmParams.y = (int) event.getRawY() - mFloatView.getMeasuredHeight() / 2 - 25;
+                mWindowManager.updateViewLayout(mFloatLayout, wmParams);
+                return false;
+            }
+        });
+
+        mFloatView.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                // hide the button
+                mFloatView.setVisibility(View.INVISIBLE);
+
+                Handler handler1 = new Handler();
+                handler1.postDelayed(new Runnable() {
+                    public void run() {
+                        //start virtual
+                      //  startVirtual();
+                    }
+                }, 500);
+
+                Handler handler2 = new Handler();
+                handler2.postDelayed(new Runnable() {
+                    public void run() {
+                        //capture the screen
+                        startCapture();
+                    }
+                }, 1500);
+
+                Handler handler3 = new Handler();
+                handler3.postDelayed(new Runnable() {
+                    public void run() {
+                        mFloatView.setVisibility(View.VISIBLE);
+                        //stopVirtual();
+                    }
+                }, 1000);
+            }
+        });
+
+        Log.i(TAG, "created the float sphere view");
+    }
 
     @Override
     public void onCreate() {
         screenRecordService=this;
-
+        createFloatView();
         super.onCreate();
     }
 
