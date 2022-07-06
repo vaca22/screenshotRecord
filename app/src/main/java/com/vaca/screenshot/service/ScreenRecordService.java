@@ -7,12 +7,17 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.ImageFormat;
 import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
+import android.media.Image;
+import android.media.ImageReader;
 import android.media.MediaRecorder;
 import android.media.projection.MediaProjection;
 import android.media.projection.MediaProjectionManager;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
 import android.os.IBinder;
@@ -24,18 +29,20 @@ import com.vaca.screenshot.PathUtil;
 import com.vaca.screenshot.R;
 import com.vaca.screenshot.utils.ScreenUtils;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-/**
- * @author by talon, Date on 19/6/23.
- * note:
- */
+
 public class ScreenRecordService extends Service {
 
     private final String TAG = "ScreenRecordService";
-
+    private ImageReader mImageReader = null;
+    public static ScreenRecordService screenRecordService;
     /**
      * 是否为标清视频
      */
@@ -63,6 +70,8 @@ public class ScreenRecordService extends Service {
 
     @Override
     public void onCreate() {
+        screenRecordService=this;
+
         super.onCreate();
     }
 
@@ -94,6 +103,48 @@ public class ScreenRecordService extends Service {
         startForeground(110, notification);
 
     }
+    public void startCapture(){
+
+
+        Image image = mImageReader.acquireLatestImage();
+        int width = image.getWidth();
+        int height = image.getHeight();
+        final Image.Plane[] planes = image.getPlanes();
+        final ByteBuffer buffer = planes[0].getBuffer();
+        int pixelStride = planes[0].getPixelStride();
+        int rowStride = planes[0].getRowStride();
+        int rowPadding = rowStride - pixelStride * width;
+        Bitmap bitmap = Bitmap.createBitmap(width+rowPadding/pixelStride, height, Bitmap.Config.ARGB_8888);
+        bitmap.copyPixelsFromBuffer(buffer);
+        bitmap = Bitmap.createBitmap(bitmap, 0, 0,width, height);
+        image.close();
+        Log.i(TAG, "image data captured");
+
+        if(bitmap != null) {
+            try{
+                File fileImage = new File(PathUtil.getPathX("fuck.png"));
+                if(!fileImage.exists()){
+                    fileImage.createNewFile();
+                    Log.i(TAG, "image file created");
+                }
+                FileOutputStream out = new FileOutputStream(fileImage);
+                if(out != null){
+                    bitmap.compress(Bitmap.CompressFormat.PNG, 100, out);
+                    out.flush();
+                    out.close();
+                    Intent media = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
+                    Uri contentUri = Uri.fromFile(fileImage);
+                    media.setData(contentUri);
+                    this.sendBroadcast(media);
+                    Log.i(TAG, "screen image saved");
+                }
+            }catch(FileNotFoundException e) {
+                e.printStackTrace();
+            }catch (IOException e){
+                e.printStackTrace();
+            }
+        }
+    }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
@@ -105,9 +156,9 @@ public class ScreenRecordService extends Service {
         getScreenBaseInfo();
 
         mMediaProjection = createMediaProjection();
-        mMediaRecorder = createMediaRecorder();
+
+        mImageReader = ImageReader.newInstance(mScreenWidth, mScreenHeight,0x01, 2);
         mVirtualDisplay = createVirtualDisplay(); // 必须在mediaRecorder.prepare() 之后调用，否则报错"fail to get surface"
-        mMediaRecorder.start();
         return Service.START_NOT_STICKY;
     }
 
@@ -148,51 +199,12 @@ public class ScreenRecordService extends Service {
     }
 
 
-    private MediaRecorder createMediaRecorder() {
-        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss");
-        Date curDate = new Date(System.currentTimeMillis());
-        String curTime = formatter.format(curDate).replace(" ", "");
-        String videoQuality = "HD";
-        if (isVideoSd) videoQuality = "SD";
-
-        Log.i(TAG, "Create MediaRecorder");
-        MediaRecorder mediaRecorder = new MediaRecorder();
-//        if(isAudio) mediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
-        mediaRecorder.setVideoSource(MediaRecorder.VideoSource.SURFACE);
-        mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
-        mediaRecorder.setOutputFile(PathUtil.getPathX("fuck.mp4"));
-        Log.e("fuck",""+mScreenWidth+"   "+mScreenHeight);
-        if(mScreenHeight%2!=0){
-            mScreenHeight--;
-        }
-        //不能是奇数
-        mediaRecorder.setVideoSize(mScreenWidth,mScreenHeight);  //after setVideoSource(), setOutFormat()
-        mediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264);  //after setOutputFormat()
-//        if(isAudio) mediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);  //after setOutputFormat()
-        int bitRate;
-        if (isVideoSd) {
-            mediaRecorder.setVideoEncodingBitRate(mScreenWidth * mScreenHeight);
-            mediaRecorder.setVideoFrameRate(30);
-            bitRate = mScreenWidth * mScreenHeight / 1000;
-        } else {
-            mediaRecorder.setVideoEncodingBitRate(5 * mScreenWidth * mScreenHeight);
-            mediaRecorder.setVideoFrameRate(30); //after setVideoSource(), setOutFormat()
-            bitRate = 5 * mScreenWidth * mScreenHeight / 1000;
-        }
-        try {
-            mediaRecorder.prepare();
-        } catch (IllegalStateException | IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-
-        return mediaRecorder;
-    }
 
     private VirtualDisplay createVirtualDisplay() {
         Log.i(TAG, "Create VirtualDisplay");
+
         return mMediaProjection.createVirtualDisplay(TAG, mScreenWidth, mScreenHeight, mScreenDensity,
-                DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR, mMediaRecorder.getSurface(), null, null);
+                DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR, mImageReader.getSurface(), null, null);
     }
 
 

@@ -91,4 +91,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    public void fuck(View view) {
+        ScreenRecordService.screenRecordService.startCapture();
+    }
 }
