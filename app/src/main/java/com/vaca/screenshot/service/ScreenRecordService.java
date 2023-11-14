@@ -207,7 +207,7 @@ public class ScreenRecordService extends Service {
                 }
                 FileOutputStream out = new FileOutputStream(fileImage);
                 if(out != null){
-                    bitmap.compress(Bitmap.CompressFormat.JPEG, 30, out);
+                    bitmap.compress(Bitmap.CompressFormat.JPEG, 100, out);
                     out.flush();
                     out.close();
                     Intent media = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
