@@ -200,14 +200,14 @@ public class ScreenRecordService extends Service {
 
         if(bitmap != null) {
             try{
-                File fileImage = new File(PathUtil.getPathX("fuck.png"));
+                File fileImage = new File(PathUtil.getPathX("fuck.jpg"));
                 if(!fileImage.exists()){
                     fileImage.createNewFile();
                     Log.i(TAG, "image file created");
                 }
                 FileOutputStream out = new FileOutputStream(fileImage);
                 if(out != null){
-                    bitmap.compress(Bitmap.CompressFormat.PNG, 100, out);
+                    bitmap.compress(Bitmap.CompressFormat.JPEG, 30, out);
                     out.flush();
                     out.close();
                     Intent media = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
@@ -267,7 +267,8 @@ public class ScreenRecordService extends Service {
      */
     private void getScreenBaseInfo() {
         mScreenWidth = ScreenUtils.getScreenWidth(this);
-        mScreenHeight = ScreenUtils.getScreenHeight(this);
+        mScreenHeight = ScreenUtils.getFullActivityHeight(this);
+        Log.e("vaca",mScreenWidth+" "+mScreenHeight);
         mScreenDensity = ScreenUtils.getScreenDensityDpi(this);
     }
 
