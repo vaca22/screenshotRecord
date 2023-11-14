@@ -200,7 +200,7 @@ public class ScreenRecordService extends Service {
 
         if(bitmap != null) {
             try{
-                File fileImage = new File(PathUtil.getPathX("fuck.jpg"));
+                File fileImage = new File(PathUtil.getPathX("xx.jpg"));
                 if(!fileImage.exists()){
                     fileImage.createNewFile();
                     Log.i(TAG, "image file created");
