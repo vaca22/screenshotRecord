@@ -15,6 +15,9 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.vaca.screenshot.service.ScreenRecordService
 import com.vaca.screenshot.utils.CaptureUtils
+import com.vaca.screenshot.utils.CaptureUtils.createScreenCapture
+import com.vaca.screenshot.utils.CaptureUtils.registerCapture
+import com.vaca.screenshot.utils.CaptureUtils.startCapture
 
 
 /**
@@ -22,53 +25,31 @@ import com.vaca.screenshot.utils.CaptureUtils
  * note:
  */
 class MainActivity : AppCompatActivity() {
-    lateinit var dada: ActivityResultLauncher<Intent>
-    private var mMediaProjectionManager: MediaProjectionManager? = null
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         PathUtil.initVar(this)
-        mMediaProjectionManager =
-            getSystemService(MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
+        registerCapture(this)
 
-        dada = registerForActivityResult(
-            StartActivityForResult(),
-            ActivityResultCallback { result ->
-                if (result.resultCode == RESULT_OK) {
-                    try {
-                        Toast.makeText(this, "允许录屏", Toast.LENGTH_SHORT).show()
-                        val service = Intent(this, ScreenRecordService::class.java)
-                        CaptureUtils.mResultCode = result.resultCode
-                        CaptureUtils.mResultData = result.data
-                        startForegroundService(service)
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                    }
-                } else {
-                    Toast.makeText(this, "拒绝录屏", Toast.LENGTH_SHORT).show()
-                }
-            })
     }
 
     fun StartRecorder(view: View?) {
         createScreenCapture()
     }
 
-    fun StopRecorder(view: View?) {
-        val service = Intent(this, ScreenRecordService::class.java)
-        stopService(service)
-    }
 
-    private fun createScreenCapture() {
-        val captureIntent = mMediaProjectionManager!!.createScreenCaptureIntent()
 
-        dada.launch(captureIntent)
-
-    }
 
 
     fun gaga(view: View?) {
-        ScreenRecordService.screenRecordService!!.startCapture()
+        startCapture()
+
+    }
+
+    fun StopRecorder(view: View) {
+        CaptureUtils.stopCapture()
     }
 
 
