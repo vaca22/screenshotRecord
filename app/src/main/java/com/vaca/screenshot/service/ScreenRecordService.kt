@@ -67,16 +67,7 @@ class ScreenRecordService : Service() {
 
     private fun createNotificationChannel() {
         val builder = Notification.Builder(this.applicationContext) //获取一个Notification构造器
-        val nfIntent = Intent(this, MainActivity::class.java) //点击后跳转的界面，可以设置跳转数据
-        builder.setContentIntent(
-            PendingIntent.getActivity(
-                this,
-                0,
-                nfIntent,
-                PendingIntent.FLAG_IMMUTABLE
-            )
-        ) // 设置PendingIntent
-            .setLargeIcon(
+        builder.setLargeIcon(
                 BitmapFactory.decodeResource(
                     this.resources,
                     R.mipmap.ic_launcher
@@ -100,7 +91,7 @@ class ScreenRecordService : Service() {
             notificationManager.createNotificationChannel(channel)
         }
         val notification = builder.build() // 获取构建好的Notification
-        notification.defaults = Notification.DEFAULT_SOUND //设置为默认的声音
+
         startForeground(110, notification)
     }
 

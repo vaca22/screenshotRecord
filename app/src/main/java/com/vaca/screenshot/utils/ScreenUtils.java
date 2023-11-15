@@ -11,22 +11,13 @@ import android.view.WindowManager;
 
 import androidx.annotation.NonNull;
 
-import com.vaca.screenshot.MainApplication;
 
-/**
- * Created by Talon on 18/4/19.
- * 有关屏幕的一切操作
- */
 
 public class ScreenUtils {
 
-    /***
-     * 获取屏幕的高度，全面屏和非全面屏
-     * @param context
-     * @return
-     */
+
     public static int getFullActivityHeight(Context context) {
-        if (!isAllScreenDevice()) {
+        if (!isAllScreenDevice(context)) {
             return getScreenHeight(context);
         }
         return getScreenRealHeight(context);
@@ -42,10 +33,7 @@ public class ScreenUtils {
 
     public static int getScreenRealHeight(Context context) {
 
-        int orientation = context != null
-                ? context.getResources().getConfiguration().orientation
-                : MainApplication.application.getResources().getConfiguration().orientation;
-        orientation = orientation == Configuration.ORIENTATION_PORTRAIT ? PORTRAIT : LANDSCAPE;
+        int orientation =  PORTRAIT;
 
         if (mRealSizes[orientation] == null) {
             WindowManager windowManager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
@@ -72,14 +60,14 @@ public class ScreenUtils {
      * @return
      */
 
-    public static boolean isAllScreenDevice() {
+    public static boolean isAllScreenDevice(Context context) {
         if (mHasCheckAllScreen) {
             return mIsAllScreenDevice;
         }
         mHasCheckAllScreen = true;
         mIsAllScreenDevice = false;
         // API小于21时，没有全面屏
-        WindowManager windowManager = (WindowManager) MainApplication.application.getSystemService(Context.WINDOW_SERVICE);
+        WindowManager windowManager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
         if (windowManager != null) {
             Display display = windowManager.getDefaultDisplay();
             Point point = new Point();
@@ -103,7 +91,7 @@ public class ScreenUtils {
      * 得到设备屏幕的宽度
      */
     public static int getScreenWidth(Context context) {
-        WindowManager windowManager = (WindowManager) MainApplication.application.getSystemService(Context.WINDOW_SERVICE);
+        WindowManager windowManager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
         Display display = windowManager.getDefaultDisplay();
         Point point = new Point();
         display.getSize(point);
