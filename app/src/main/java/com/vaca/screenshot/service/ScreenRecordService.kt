@@ -31,6 +31,8 @@ import android.widget.LinearLayout
 import com.vaca.screenshot.MainActivity
 import com.vaca.screenshot.PathUtil
 import com.vaca.screenshot.R
+import com.vaca.screenshot.utils.CaptureUtils.mResultCode
+import com.vaca.screenshot.utils.CaptureUtils.mResultData
 import com.vaca.screenshot.utils.ScreenUtils
 import java.io.File
 import java.io.FileNotFoundException
@@ -48,8 +50,7 @@ class ScreenRecordService : Service() {
     private var mScreenWidth = 0
     private var mScreenHeight = 0
     private var mScreenDensity = 0
-    private var mResultCode = 0
-    private var mResultData: Intent? = null
+
     private var mMediaProjection: MediaProjection? = null
     private val mMediaRecorder: MediaRecorder? = null
     private var mVirtualDisplay: VirtualDisplay? = null
@@ -58,58 +59,9 @@ class ScreenRecordService : Service() {
         return null
     }
 
-    private var mFloatLayout: LinearLayout? = null
-    private var wmParams: WindowManager.LayoutParams? = null
-    private var mWindowManager: WindowManager? = null
-    private var inflater: LayoutInflater? = null
-    private var mFloatView: ImageButton? = null
-    private fun createFloatView() {
-        wmParams = WindowManager.LayoutParams()
-        mWindowManager = getSystemService(WINDOW_SERVICE) as WindowManager
-        wmParams!!.type = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
-        wmParams!!.format = PixelFormat.RGBA_8888
-        wmParams!!.flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
-        wmParams!!.gravity = Gravity.LEFT or Gravity.TOP
-        wmParams!!.x = 0
-        wmParams!!.y = 0
-        wmParams!!.width = WindowManager.LayoutParams.WRAP_CONTENT
-        wmParams!!.height = WindowManager.LayoutParams.WRAP_CONTENT
-        inflater = getSystemService(LAYOUT_INFLATER_SERVICE) as LayoutInflater
-        mFloatLayout = inflater!!.inflate(R.layout.float_layout, null) as LinearLayout
-        mWindowManager!!.addView(mFloatLayout, wmParams)
-        mFloatView = mFloatLayout!!.findViewById<View>(R.id.float_id) as ImageButton
-        mFloatLayout!!.measure(
-            View.MeasureSpec.makeMeasureSpec(
-                0,
-                View.MeasureSpec.UNSPECIFIED
-            ), View.MeasureSpec
-                .makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
-        )
-        mFloatView!!.setOnTouchListener { v, event -> // TODO Auto-generated method stub
-            wmParams!!.x = event.rawX.toInt() - mFloatView!!.measuredWidth / 2
-            wmParams!!.y = event.rawY.toInt() - mFloatView!!.measuredHeight / 2 - 25
-            mWindowManager!!.updateViewLayout(mFloatLayout, wmParams)
-            false
-        }
-        mFloatView!!.setOnClickListener {
-            // hide the button
-            mFloatView!!.visibility = View.INVISIBLE
-            val handler2 = Handler()
-            handler2.postDelayed({ //capture the screen
-                startCapture()
-            }, 500)
-            val handler3 = Handler()
-            handler3.postDelayed({
-                mFloatView!!.visibility = View.VISIBLE
-                //stopVirtual();
-            }, 1000)
-        }
-        Log.i(TAG, "created the float sphere view")
-    }
 
     override fun onCreate() {
         screenRecordService = this
-        createFloatView()
         super.onCreate()
     }
 
@@ -129,18 +81,15 @@ class ScreenRecordService : Service() {
                     this.resources,
                     R.mipmap.ic_launcher
                 )
-            ) // 设置下拉列表中的图标(大图标)
-            //.setContentTitle("SMI InstantView") // 设置下拉列表里的标题
-            .setSmallIcon(R.mipmap.ic_launcher) // 设置状态栏内的小图标
-            .setContentText("is running......") // 设置上下文内容
-            .setWhen(System.currentTimeMillis()) // 设置该通知发生的时间
+            ).setSmallIcon(R.mipmap.ic_launcher)
+            .setContentText("is running......")
+            .setWhen(System.currentTimeMillis())
 
-        /*以下是对Android 8.0的适配*/
-        //普通notification适配
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             builder.setChannelId("notification_id")
         }
-        //前台服务notification适配
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
             val channel = NotificationChannel(
@@ -172,22 +121,20 @@ class ScreenRecordService : Service() {
         Log.i(TAG, "image data captured")
         if (bitmap != null) {
             try {
-                val fileImage = File(PathUtil.getPathX("xx.jpg"))
+                val fileImage = File(PathUtil.getPathCache("xx.png"))
                 if (!fileImage.exists()) {
                     fileImage.createNewFile()
                     Log.i(TAG, "image file created")
                 }
                 val out = FileOutputStream(fileImage)
-                if (out != null) {
-                    bitmap.compress(Bitmap.CompressFormat.JPEG, 100, out)
-                    out.flush()
-                    out.close()
-                    val media = Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE)
-                    val contentUri = Uri.fromFile(fileImage)
-                    media.data = contentUri
-                    this.sendBroadcast(media)
-                    Log.i(TAG, "screen image saved")
-                }
+                bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
+                out.flush()
+                out.close()
+                val media = Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE)
+                val contentUri = Uri.fromFile(fileImage)
+                media.data = contentUri
+                this.sendBroadcast(media)
+                Log.i(TAG, "screen image saved")
             } catch (e: FileNotFoundException) {
                 e.printStackTrace()
             } catch (e: IOException) {
@@ -198,10 +145,9 @@ class ScreenRecordService : Service() {
 
     @SuppressLint("WrongConstant")
     override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
-        mResultCode = intent.getIntExtra("resultCode", 1)
-        mResultData = intent.getParcelableExtra("data")
+
         createNotificationChannel()
-        screenBaseInfo
+        screenBaseInfo()
         mMediaProjection = createMediaProjection()
         mImageReader =
             ImageReader.newInstance(mScreenWidth, mScreenHeight,  android.graphics.PixelFormat.RGBA_8888, 2)
@@ -231,11 +177,7 @@ class ScreenRecordService : Service() {
     /**
      * 获取屏幕相关数据
      */
-    private val screenBaseInfo: Unit
-        /**
-         * 获取屏幕相关数据
-         */
-        private get() {
+    private fun screenBaseInfo() {
             mScreenWidth = ScreenUtils.getScreenWidth(this)
             mScreenHeight = ScreenUtils.getFullActivityHeight(this)
             Log.e("vaca", "$mScreenWidth $mScreenHeight")

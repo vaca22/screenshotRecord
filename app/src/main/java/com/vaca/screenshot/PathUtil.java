@@ -1,6 +1,7 @@
 package com.vaca.screenshot;
 
 import android.content.Context;
+import android.util.Log;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -9,6 +10,7 @@ public class PathUtil {
 
     public static String filePath;
     public static String filePathY;
+    public static String filePathCache;
 
     public static String getPathX(String s) {
         return filePath + s;
@@ -20,6 +22,10 @@ public class PathUtil {
 
     public static String getPathY(String s) {
         return filePathY + s;
+    }
+
+    public static String getPathCache(String s) {
+        return filePathCache + s;
     }
 
     public static void deleteRecursive(File fileOrDirectory) {
@@ -43,6 +49,9 @@ public class PathUtil {
         if (!file.exists()) {
             file.mkdir();
         }
+
+        filePathCache = context.getCacheDir().getAbsolutePath() + "/";
+        Log.e("vaca", "initVar: "+filePathCache);
 
     }
 
