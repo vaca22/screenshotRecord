@@ -65,7 +65,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    fun fuck(view: View?) {
+    fun gaga(view: View?) {
         ScreenRecordService.screenRecordService!!.startCapture()
     }
 
